@@ -14,17 +14,144 @@ great byte "Try lesser Input",0
 ticTacToe BYTE "=====================================", 0Ah, 0Dh
           BYTE "|        T I C   T A C   T O E      |", 0Ah, 0Dh
           BYTE "=====================================", 0
+
 vertical byte "|",0
 horizontal byte "-",0
-
 .CODE
 
+; -------------------------
+; Draw the board
+; -------------------------
 DrawBoard PROC
-    ; [Exact DrawBoard code from Milestone 3]
-    ; ...
+    
+    call Clrscr
+    mov eax, lightgreen + (black * 16)      ; Bright cyan heading
+    call SetTextColor
+    mov edx, OFFSET ticTacToe
+    call WriteString
+
+    call crlf
+    call crlf
+    
+    mov eax, lightGray + (black * 16) ; returning to normal color
+    call SetTextColor
+
+    mov al, ' '
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call writechar
+    call writechar
+    call WriteChar
+    call WriteChar
+    call writechar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+
+    mov edx,offset horizontal
+    mov ecx,11
+    l1:
+    call writestring
+    loop l1
+    call crlf
+    mov ecx,0
+    mov esi,offset board
+    mov al, ' '
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call writechar
+    call WriteChar
+    call WriteChar
+    call writechar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    mov edx,offset vertical
+    call writestring
+    
+    mov al,' '
+    call writechar
+
+nextCell:
+
+
+    mov al, [esi]
+    inc esi
+    call WriteChar
+    
+    mov al, ' '
+    call WriteChar
+    mov edx,offset vertical
+    call writestring
+    call writechar
+    inc ecx
+    cmp ecx,9
+    je doneBoard
+
+    ; after every 3 cells, print newline
+    mov eax,ecx   
+    xor edx,edx    ; clearing edx
+    mov ebx,3      ; ebx = 3
+    div ebx        ; EAX = quotient, EDX = remainder
+    cmp edx,0      ; checking remainder is zero or not
+    jne nextCell   ; if (edx)remainder != 0
+
+   
+    call Crlf
+    call crlf
+    
+    mov al, ' '
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call writechar
+    call WriteChar
+    call WriteChar
+    call writechar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    call WriteChar
+    
+    mov edx,offset vertical
+    call writestring
+    
+    mov al,' '
+    call writechar
+    jmp nextCell
+
+doneBoard:
+    call Crlf
+    mov eax,' '
+    mov ecx,14
+    l3:
+    call writechar
+    loop l3
+    
+    mov edx,offset horizontal
+    mov ecx,11
+    l2:
+    call writestring
+    loop l2
+    call crlf
+    call crlf
     ret
 DrawBoard ENDP
 
+; -------------------------
+; Check if someone won
+; return EAX = 1 if win, 0 otherwise
+; -------------------------
 CheckWinner PROC
     mov eax,0
 
@@ -100,6 +227,10 @@ noWin:
     ret
 CheckWinner ENDP
 
+; -------------------------
+; Check for draw (all filled)
+; return EAX = 1 if draw
+; -------------------------
 CheckDraw PROC
     mov ecx,0
     mov esi,offset board
@@ -120,28 +251,29 @@ skip:
     ret
 CheckDraw ENDP
 
+; -------------------------
+; Main procedure
+; -------------------------
 main PROC
 gameLoop:
     call DrawBoard
 
+    ; show current player
     mov edx, OFFSET msgTurn
     call WriteString
     mov al, currentPlayer
     call WriteChar
     call Crlf
     jmp getMove
-    
-lesser:
+    lesser:
     mov edx, offset less
     call writestring
     call crlf
     jmp getMove
-    
-greater:
+    greater:
     mov edx, offset great
     call writestring
     call crlf
-
 getMove:
     mov edx, OFFSET msgEnter
     call WriteString
@@ -152,7 +284,7 @@ getMove:
     cmp eax,9
     jg greater
 
-    dec eax        
+    dec eax        ; convert 1-9 to 0-8
     mov ebx,eax
 
     mov al, board[ebx]
@@ -161,6 +293,7 @@ getMove:
     cmp al,'O'
     je invalid
 
+    ; place mark
     mov al, currentPlayer
     mov board[ebx], al
 
@@ -179,7 +312,6 @@ getMove:
     jne setX
     mov currentPlayer,'O'
     jmp gameLoop
-    
 setX:
     mov currentPlayer,'X'
     jmp gameLoop
