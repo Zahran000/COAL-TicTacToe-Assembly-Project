@@ -20,16 +20,110 @@ horizontal byte "-",0
 .CODE
 
 DrawBoard PROC
-    ; [Exact DrawBoard code from Milestone 3 remains here]
-    ; (Truncated for brevity in this view, but copy from M3)
+    ; [Exact DrawBoard code from Milestone 3]
+    ; ...
     ret
 DrawBoard ENDP
+
+CheckWinner PROC
+    mov eax,0
+
+    ; checking horizontal pattern of row 1
+    mov al, board[0]
+    cmp al, board[1]
+    jne checkRow2
+    cmp al, board[2]
+    jne checkRow2
+    jmp winFound
+    ; checking horizontal pattern of row 2
+checkRow2:
+    mov al, board[3]
+    cmp al, board[4]
+    jne checkRow3
+    cmp al, board[5]
+    jne checkRow3
+    jmp winFound
+    ; checking horizontal pattern of row 3
+checkRow3:
+    mov al, board[6]
+    cmp al, board[7]
+    jne checkCol1
+    cmp al, board[8]
+    jne checkCol1
+    jmp winFound
+
+    ; checking vertical pattern of column 1
+checkCol1:
+    mov al, board[0]
+    cmp al, board[3]
+    jne checkCol2
+    cmp al, board[6]
+    jne checkCol2
+    jmp winFound
+    ; checking vertical pattern of column 2
+checkCol2:
+    mov al, board[1]
+    cmp al, board[4]
+    jne checkCol3
+    cmp al, board[7]
+    jne checkCol3
+    jmp winFound
+    ; checking vertical pattern of column 3
+checkCol3:
+    mov al, board[2]
+    cmp al, board[5]
+    jne checkDiag1
+    cmp al, board[8]
+    jne checkDiag1
+    jmp winFound
+
+    ; checking diagonal 1
+checkDiag1:
+    mov al, board[0]
+    cmp al, board[4]
+    jne checkDiag2
+    cmp al, board[8]
+    jne checkDiag2
+    jmp winFound
+    ; checking diagonal 2
+checkDiag2:
+    mov al, board[2]
+    cmp al, board[4]
+    jne noWin
+    cmp al, board[6]
+    jne noWin
+winFound:
+    mov eax,1
+    ret
+noWin:
+    xor eax,eax
+    ret
+CheckWinner ENDP
+
+CheckDraw PROC
+    mov ecx,0
+    mov esi,offset board
+checkLoop:
+    mov al, [esi]
+    inc esi
+    cmp al,'X'
+    je skip
+    cmp al,'O'
+    je skip
+    xor eax,eax
+    ret
+skip:
+    inc ecx
+    cmp ecx,9
+    jl checkLoop
+    mov eax,1
+    ret
+CheckDraw ENDP
 
 main PROC
 gameLoop:
     call DrawBoard
 
-    ; show current player
     mov edx, OFFSET msgTurn
     call WriteString
     mov al, currentPlayer
@@ -58,7 +152,7 @@ getMove:
     cmp eax,9
     jg greater
 
-    dec eax        ; convert 1-9 to 0-8
+    dec eax        
     mov ebx,eax
 
     mov al, board[ebx]
@@ -67,9 +161,18 @@ getMove:
     cmp al,'O'
     je invalid
 
-    ; place mark
     mov al, currentPlayer
     mov board[ebx], al
+
+    ; check winner
+    call CheckWinner
+    cmp eax,1
+    je winner
+
+    ; check draw
+    call CheckDraw
+    cmp eax,1
+    je draw
 
     ; switch player
     cmp currentPlayer,'X'
@@ -86,6 +189,24 @@ invalid:
     call WriteString
     call Crlf
     jmp getMove
+
+winner:
+    call DrawBoard
+    mov edx, OFFSET msgTurn
+    call WriteString
+    mov al, currentPlayer
+    call WriteChar
+    mov edx, OFFSET msgWin
+    call WriteString
+    call Crlf
+    exit
+
+draw:
+    call DrawBoard
+    mov edx, OFFSET msgDraw
+    call WriteString
+    call Crlf
+    exit
 
 main ENDP
 END main
